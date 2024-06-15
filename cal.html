@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>Calculator</title>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+		
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				display: flex;
+                flex-direction: column;
+				justify-content: center;
+				align-items: center;
+				height: 100vh;
+				margin: 0;
+				background-color: #000;
+				position: relative;
+			}
+
+			.calculator {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: 10px;
+				padding: 20px;
+				border-radius: 10px;
+				background-color: #333;
+				max-width: 400px;
+				width: 100%;
+			}
+
+			#display {
+				grid-column: span 4;
+				background-color: #000;
+				color: #fff;
+				text-align: right;
+				padding-top: 20px;
+				padding-left: 20px;
+				padding-right: 20px;
+				font-size: 2.5rem;
+				border-radius: 10px;
+				margin-bottom: 10px;
+				overflow-x: auto;
+				overflow-y: hidden;
+				box-sizing: content-box;
+				white-space: nowrap;
+				scrollbar-width: thin;
+				scrollbar-color: #fff transparent;
+			}
+
+			#display::-webkit-scrollbar {
+				height: 8px;
+				background: transparent;
+			}
+
+			#display::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			#display::-webkit-scrollbar-thumb {
+				background: #fff;
+				border-radius: 4px;
+			}
+
+			#display::-moz-scrollbar {
+				height: 8px;
+				background: transparent;
+			}
+
+			#display::-moz-scrollbar-track {
+				background: transparent;
+			}
+
+			#display::-moz-scrollbar-thumb {
+				background: #fff;
+				border-radius: 4px;
+			}
+
+			.btn {
+				padding: 20px;
+				font-size: 2rem;
+				border: none;
+				border-radius: 10px;
+				cursor: pointer;
+				position: relative;
+				overflow: hidden;
+			}
+
+            .key-text {
+                font-size: 0.6rem;
+                position: absolute;
+                bottom: 8px;
+                right: 8px;
+                opacity: 0.5;
+            }
+
+			.btn::after {
+				content: "";
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				top: 50%;
+				left: 50%;
+				pointer-events: none;
+				background: rgba(255, 255, 255, 0.4);
+				border-radius: 10px;
+				transform: translate(-50%, -50%) scale(1);
+				transition: transform 0.1s, opacity 0.5s;
+				opacity: 0;
+			}
+
+			.btn:active::after {
+				opacity: 1;
+				transform: translate(-50%, -50%) scale(0);
+				transition: none;
+			}
+
+			.btn.gray {
+				background-color: #a5a5a5;
+				color: #000;
+			}
+
+			.btn.dark {
+				background-color: #555;
+				color: #fff;
+			}
+
+			.btn.orange {
+				background-color: #f09a36;
+				color: #fff;
+			}
+
+			.btn.orange.active {
+				background-color: white;
+				color: #f09a36;
+			}
+
+			.history-icon {
+				position: absolute;
+				top: 16px;
+				right: 68px;
+				font-size: 24px;
+				cursor: pointer;
+				color: gray;
+				transition: color 0.3s;
+			}
+
+			.history-icon.maximized {
+				color: #f09a36;
+			}
+
+			.sidebar {
+				display: none;
+				position: fixed;
+				top: 0;
+				right: 0;
+				height: 100%;
+				width: 300px;
+				padding-left: 8px;
+				background-color: #333;
+				color: white;
+				box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+				overflow-y: auto;
+				z-index: 1000;
+				overflow-x: hidden;
+				scrollbar-width: thin;
+				scrollbar-color: #fff transparent;
+				box-sizing: content-box;
+			}
+
+			.sidebar::-webkit-scrollbar {
+				width: 8px;
+				background: transparent;
+			}
+
+			.sidebar::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			.sidebar::-webkit-scrollbar-thumb {
+				background: #fff;
+				border-radius: 4px;
+			}
+
+			.sidebar::-moz-scrollbar {
+				width: 8px;
+				background: transparent;
+			}
+
+			.sidebar::-moz-scrollbar-track {
+				background: transparent;
+			}
+
+			.sidebar::-moz-scrollbar-thumb {
+				background: #fff;
+				border-radius: 4px;
+			}
+
+			.sidebar.show {
+				display: block;
+			}
+
+			.header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 20px;
+				background-color: #333;
+				position: sticky;
+				top: 0;
+				z-index: 10;
+			}
+
+			.close-btn {
+				font-size: 24px;
+				cursor: pointer;
+				color: white;
+			}
+
+			.clear-history-btn {
+				font-size: 24px;
+				cursor: pointer;
+				color: white;
+				margin-left: 10px;
+				line-height: 0;
+			}
+
+			h2 {
+				color: #999;
+				margin: 0;
+			}
+
+			.history-content div:first-child {
+				margin-top: 10px;
+				margin-bottom: 30px;
+				color: #fff;
+			}
+
+			.history-content div:not(:first-child) {
+				margin-bottom: 10px;
+				color: #bbb;
+			}
+
+			.history-content {
+				padding-left: 20px;
+				padding-right: 20px;
+			}
+
+            .btn.active::after {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0);
+                transition: none;
+            }
+
+            .features-icon {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                font-size: 24px;
+                cursor: pointer;
+                color: gray;
+                transition: color 0.3s;
+            }
+
+            .features-icon.maximized {
+                color: #f09a36;
+            }
+
+            .feature-list {
+                list-style-type: none;
+                padding: 0;
+                margin: 0;
+                color: #d9d9d9;
+            }
+
+            .feature-list li {
+                margin-bottom: 20px;
+            }
+
+            i {
+                font-size: 30px;
+            }
+
+            .footer {
+                position: absolute;
+                text-align: center;
+                bottom: 16px;
+                width: 100%;
+                color: #c0c0c0;
+                font-size: small;
+            }
+
+            a {
+                text-decoration: none;
+            }
+		</style>
+	</head>
+
+	<body>
+        <div class="history-icon" id="toggle-history"><i class="fas fa-history"></i></div>
+        <div class="features-icon" id="toggle-features"><i class="fas fa-chart-bar"></i></div>
+    
+        <div class="sidebar" id="history-sidebar">
+			<div class="header">
+				<h2>History <span class="clear-history-btn" id="clear-history"><i class="fas fa-trash-alt" style="font-size: 20px;"></i></span>
+				</h2>
+				<div class="close-btn" id="close-history"><i class="fas fa-times"></i></div>
+			</div>
+			<div id="history-content" class="history-content"></div>
+		</div>
+
+        <div class="sidebar" id="features-sidebar">
+			<div class="header">
+				<h2>Features</h2>
+				<div class="close-btn" id="close-features"><i class="fas fa-times"></i></div>
+			</div>
+			<div id="features-content" class="history-content">
+				<ul class="feature-list">
+                    <li><b>High Precision Calculations</b>: Supports up to 16 decimal places with rounding at the last digit. This precision adheres to JavaScript's IEEE 754 double-precision floating-point format, ensuring accurate representation for numbers up to approximately 15-17 significant digits.</li>
+                    <li><b>Support for Negative Numbers</b>: Capable of handling negative values seamlessly, allowing for comprehensive arithmetic operations.</li>
+                    <li><b>Calculation History</b>: Keeps a log of all performed calculations, enabling users to review past operations and results.</li>
+                    <li><b>Digit-by-Digit Deletion</b>: Features a "DE" button that allows users to delete one digit at a time, providing precise control over input correction.</li>
+                    <li><b>Basic Arithmetic Operations</b>: Supports the four fundamental mathematical operations: addition, subtraction, multiplication, and division.</li>
+                    <li><b>Double Zero Input</b>: Includes a "00" button to facilitate quicker entry of numbers, enhancing the efficiency of the input process.</li>
+                    <li><b>Multimodal Input Support</b>: Allows for input via both keyboard and mouse clicks, providing versatile interaction options for the user.</li>
+                </ul>
+			</div>
+		</div>
+
+        <div class="calculator">
+            <div id="display">0</div>
+            <button class="btn gray" data-action="clear">AC<span class="key-text">esc</span></button>
+            <button class="btn gray" data-action="delete">DE<span class="key-text">back</span></button>
+            <button class="btn gray" data-action="toggle-sign">+/-<span class="key-text">control</span></button>
+            <button class="btn orange" data-action="operator" data-operator="/">÷</button>
+            <button class="btn dark" data-action="number" data-number="7">7</button>
+            <button class="btn dark" data-action="number" data-number="8">8</button>
+            <button class="btn dark" data-action="number" data-number="9">9</button>
+            <button class="btn orange" data-action="operator" data-operator="*">x<span class="key-text">*</span></button>
+            <button class="btn dark" data-action="number" data-number="4">4</button>
+            <button class="btn dark" data-action="number" data-number="5">5</button>
+            <button class="btn dark" data-action="number" data-number="6">6</button>
+            <button class="btn orange" data-action="operator" data-operator="-">-</button>
+            <button class="btn dark" data-action="number" data-number="1">1</button>
+            <button class="btn dark" data-action="number" data-number="2">2</button>
+            <button class="btn dark" data-action="number" data-number="3">3</button>
+            <button class="btn orange" data-action="operator" data-operator="+">+</button>
+            <button class="btn dark" data-action="number">00</button>
+            <button class="btn dark" data-action="number" data-number="0">0</button>
+            <button class="btn dark" data-action="decimal">.</button>
+            <button class="btn orange" data-action="calculate">=<span class="key-text">enter</span></button>
+        </div>
+
+        <div class="footer">
+            <p style="font-size: smaller;">Made with love by Francis <span style="color: #f09a36;">&hearts;</span></p>
+            <div>
+                <a href="https://facebook.com/itsfrancislargo" target="_blank" style="margin: 0 4px; color: #c0c0c0;">
+                    <i class="fab fa-facebook-f" style="font-size: 16px;"></i>
+                </a>
+                <a href="https://instagram.com/itsfrancislargo" target="_blank" style="margin: 0 4px; color: #c0c0c0;">
+                    <i class="fab fa-instagram" style="font-size: 16px;"></i>
+                </a>
+                <a href="https://linkedin.com/in/itsfrancislargo" target="_blank" style="margin: 0 4px; color: #c0c0c0;">
+                    <i class="fab fa-linkedin-in" style="font-size: 16px;"></i>
+                </a>
+            </div>
+        </div>
+
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				const display = document.getElementById('display');
+                
+				const buttons = document.querySelectorAll('.btn');
+
+				const historyDisplay = document.getElementById('history-content');
+				const toggleHistoryBtn = document.getElementById('toggle-history');
+				const historySidebar = document.getElementById('history-sidebar');
+				const closeHistoryBtn = document.getElementById('close-history');
+				const clearHistoryBtn = document.getElementById('clear-history');
+
+                const toggleFeaturesBtn = document.getElementById('toggle-features');
+                const featuresSidebar = document.getElementById('features-sidebar');
+                const closeFeaturesBtn = document.getElementById('close-features');
+
+				let firstOperand = null;
+				let secondOperand = null;
+				let currentOperator = null;
+				let shouldResetDisplay = false;
+
+				function clearDisplay() {
+					display.textContent = '0';
+					firstOperand = null;
+					secondOperand = null;
+					currentOperator = null;
+					shouldResetDisplay = false;
+				}
+
+				function toggleSign() {
+					display.textContent = (parseFloat(display.textContent) * -1).toString();
+				}
+
+				function applyDelete() {
+					if (display.textContent.length > 1) {
+						display.textContent = display.textContent.slice(0, -1);
+					} else {
+						display.textContent = '0';
+					}
+				}
+
+				function appendNumber(number) {
+					if (display.textContent === '0' || shouldResetDisplay) {
+						display.textContent = number;
+						shouldResetDisplay = false;
+					} else {
+						display.textContent += number;
+					}
+				}
+
+				function appendDecimal() {
+					if (!display.textContent.includes('.')) {
+						display.textContent += '.';
+					}
+				}
+
+				function setOperator(operator) {
+					if (currentOperator !== null) {
+						evaluate();
+					}
+					firstOperand = parseFloat(display.textContent);
+					currentOperator = operator;
+					shouldResetDisplay = true;
+					clearActiveOperator();
+					document.querySelector(`.btn.orange[data-operator="${operator}"]`).classList.add('active');
+				}
+
+				function clearActiveOperator() {
+					buttons.forEach(button => {
+						if (button.classList.contains('orange')) {
+							button.classList.remove('active');
+						}
+					});
+				}
+
+				function logHistory(operation, result) {
+					const historyEntry = document.createElement('div');
+					historyEntry.textContent = `${operation} = ${result}`;
+					historyDisplay.insertBefore(historyEntry, historyDisplay.firstChild);
+					toggleClearHistoryBtn();
+				}
+
+				function toggleClearHistoryBtn() {
+					if (historyDisplay.children.length > 0) {
+						clearHistoryBtn.style.display = 'inline-block';
+					} else {
+						clearHistoryBtn.style.display = 'none';
+					}
+					updatePaddingIfHorizontalScrollbarPresent();
+				}
+
+				function updatePaddingIfHorizontalScrollbarPresent() {
+					if (display.scrollWidth > display.clientWidth) {
+						// Horizontal scrollbar is present
+						display.style.paddingBottom = '12px';
+					} else {
+						// No horizontal scrollbar
+						display.style.paddingBottom = '20px';
+					}
+				}
+
+				function evaluate() {
+					if (currentOperator === null || shouldResetDisplay) return;
+					secondOperand = parseFloat(display.textContent);
+					let result;
+					switch (currentOperator) {
+						case '+':
+							result = firstOperand + secondOperand;
+							break;
+						case '-':
+							result = firstOperand - secondOperand;
+							break;
+						case '*':
+							result = firstOperand * secondOperand;
+							break;
+						case '/':
+							result = firstOperand / secondOperand;
+							break;
+						default:
+							return;
+					}
+					const operation = `${firstOperand} ${currentOperator} ${secondOperand}`;
+					display.textContent = result.toString();
+					firstOperand = result;
+					currentOperator = null;
+					shouldResetDisplay = true;
+					logHistory(operation, result);
+				}
+
+                function handleKeyboardInput(event) {
+                    const key = event.key;
+                    let button;
+                    
+                    if (key >= '0' && key <= '9') {
+                        appendNumber(key);
+                        button = document.querySelector(`.btn.dark[data-action='number'][data-number='${key}']`);
+                        clearActiveOperator();
+                    } else if (key === '.') {
+                        appendDecimal();
+                        button = document.querySelector(`.btn.dark[data-action='decimal']`);
+                        clearActiveOperator();
+                    } else if (key === '+' || key === '-' || key === '*' || key === '/' || key === 'x') {
+                        setOperator(key === 'x' || key === 'X' ? '*' : key);
+                    } else if (key === 'Enter' || key === '=') {
+                        evaluate();
+                        button = document.querySelector(`.btn.orange[data-action='calculate']`);
+                        clearActiveOperator();
+                    } else if (key === 'Backspace') {
+                        applyDelete();
+                        button = document.querySelector(`.btn.gray[data-action='delete']`);
+                        clearActiveOperator();
+                    } else if (key === 'Escape') {
+                        clearDisplay();
+                        button = document.querySelector(`.btn.gray[data-action='clear']`);
+                        clearActiveOperator();
+                    } else if (event.code === 'ControlLeft' || event.code === 'ControlRight') {
+                        toggleSign();
+                        button = document.querySelector(`.btn.gray[data-action='toggle-sign']`);
+						clearActiveOperator();
+                    }
+
+                    if (button) {
+                        button.classList.add('active');
+                        setTimeout(() => {
+                            button.classList.remove('active');
+                        }, 100);
+                    }
+
+                    updatePaddingIfHorizontalScrollbarPresent();
+                }
+
+				buttons.forEach(button => {
+					button.addEventListener('click', () => {
+						const action = button.getAttribute('data-action');
+						const value = button.textContent;
+						switch (action) {
+							case 'clear':
+								clearDisplay();
+								clearActiveOperator();
+								break;
+							case 'toggle-sign':
+								toggleSign();
+								clearActiveOperator();
+								break;
+							case 'delete':
+								applyDelete();
+								clearActiveOperator();
+								break;
+							case 'number':
+								appendNumber(value);
+								clearActiveOperator();
+								break;
+							case 'decimal':
+								appendDecimal();
+								clearActiveOperator();
+								break;
+							case 'operator':
+								setOperator(button.getAttribute('data-operator'));
+								break;
+							case 'calculate':
+								evaluate();
+								clearActiveOperator();
+								break;
+							default:
+								break;
+						}
+						updatePaddingIfHorizontalScrollbarPresent();
+					});
+				});
+
+				toggleHistoryBtn.addEventListener('click', () => {
+					historySidebar.classList.toggle('show');
+					toggleHistoryBtn.classList.toggle('maximized');
+				});
+
+				closeHistoryBtn.addEventListener('click', () => {
+					historySidebar.classList.remove('show');
+					toggleHistoryBtn.classList.remove('maximized');
+				});
+
+				clearHistoryBtn.addEventListener('click', () => {
+					if (confirm('Are you sure you want to clear history?')) {
+						historyDisplay.innerHTML = '';
+						toggleClearHistoryBtn();
+					}
+				});
+
+                toggleFeaturesBtn.addEventListener('click', () => {
+                    featuresSidebar.classList.toggle('show');
+                    toggleFeaturesBtn.classList.toggle('maximized');
+                });
+
+                closeFeaturesBtn.addEventListener('click', () => {
+                    featuresSidebar.classList.remove('show');
+                    toggleFeaturesBtn.classList.remove('maximized');
+                });
+
+                document.addEventListener('keydown', handleKeyboardInput);
+				window.addEventListener('resize', updatePaddingIfHorizontalScrollbarPresent);
+				display.addEventListener('scroll', updatePaddingIfHorizontalScrollbarPresent);
+
+				updatePaddingIfHorizontalScrollbarPresent();
+				toggleClearHistoryBtn();
+			});
+		</script>
+	</body>
+</html>
